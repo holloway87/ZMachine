@@ -1,6 +1,7 @@
 package com.me_hw.z_machine;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Executes the Z Machine.
@@ -21,7 +22,16 @@ public class Executor
 		File storyfile = new File(args[0]);
 		ZMachine machine = new ZMachine();
 
-		machine.loadStoryfile(storyfile);
+		try
+		{
+			machine.loadStoryfile(storyfile);
+		}
+		catch (IOException e)
+		{
+			System.err.printf("error: could not load story file");
+		}
+
+		machine.execute();
 	}
 
 }

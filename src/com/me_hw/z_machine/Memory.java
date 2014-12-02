@@ -12,14 +12,30 @@ public class Memory
 {
 
 	/**
-	 * The length of the dynamic memory.
+	 * The length of the dynamic memory givn in the header position 0x0e.
 	 */
 	private int dynamicLength;
 
 	/**
-	 * The original bytes buffer from the story file.
+	 * The length of the file given in the header position 0x1a.
+	 *
+	 * @since 2014.12.02
 	 */
-	private byte[] origBuffer;
+	private int fileLength;
+
+	/**
+	 * The original unsigned bytes buffer from the story file.
+	 *
+	 * @since 2014.12.02
+	 */
+	private int[] origBuffer;
+
+	/**
+	 * The address for the first routine given in the header position 0x06.
+	 *
+	 * @since 2014.12.02
+	 */
+	private int startAddr;
 
 	/**
 	 * The version file from the story file.
@@ -30,34 +46,25 @@ public class Memory
 	 * Saves the buffer and reads the header information.
 	 *
 	 * @param buffer all bytes from the story file
-	 * @throws Exception
 	 */
-	Memory(byte[] buffer) throws Exception
+	Memory(int[] buffer)
 	{
 		origBuffer = buffer;
-		if (64 > origBuffer.length)
-		{
-			throw new Exception();
-		}
 
 		_readVersion();
 		_readDymanicLength();
+		_readFileLength();
+		_readStartAddr();
 	}
 
 	/**
-	 * Reads the version number.
+	 * Determines the number of packs from the version number.
+	 *
+	 * @since 2014.12.02
+	 * @return the number of packs
 	 */
-	void _readVersion()
+	private int _getPacks()
 	{
-		version = (int)getByteAtAddr(0x0);
-	}
-
-	/**
-	 * Reads the dynamic memory length.
-	 */
-	void _readDymanicLength()
-	{
-		dynamicLength = get2BytesAtAddr(0x0e);
 		int packs = 0;
 		switch (version)
 		{
@@ -74,7 +81,44 @@ public class Memory
 				packs = 8;
 				break;
 		}
-		dynamicLength *= packs;
+
+		return packs;
+	}
+
+	/**
+	 * Reads the version number.
+	 */
+	private void _readVersion()
+	{
+		version = getByteAtAddr(0x0);
+	}
+
+	/**
+	 * Reads the dynamic memory length from the header position 0x0e.
+	 */
+	private void _readDymanicLength()
+	{
+		dynamicLength = get2BytesAtAddr(0x0e) * _getPacks();
+	}
+
+	/**
+	 * Reads the file length from the header position 0x1a.
+	 *
+	 * @since 2014.12.02
+	 */
+	private void _readFileLength()
+	{
+		fileLength = get2BytesAtAddr(0x1a) * _getPacks();
+	}
+
+	/**
+	 * Reads the start address for the first routing from the header position 0x06.
+	 *
+	 * @since 2014.12.02
+	 */
+	private void _readStartAddr()
+	{
+		startAddr = getByteAtAddr(0x06) * _getPacks();
 	}
 
 	/**
@@ -83,7 +127,7 @@ public class Memory
 	 * @param addr address
 	 * @return byte data
 	 */
-	byte getByteAtAddr(int addr)
+	int getByteAtAddr(int addr)
 	{
 		return origBuffer[addr];
 	}
@@ -106,7 +150,7 @@ public class Memory
 	 */
 	int get2BytesAtAddr(int addr)
 	{
-		return (getByteAtAddr(addr) << 8) + (int)getByteAtAddr(addr +1);
+		return (getByteAtAddr(addr) << 8) + getByteAtAddr(addr +1);
 	}
 
 	/**
@@ -120,6 +164,17 @@ public class Memory
 	}
 
 	/**
+	 * Returns the file length.
+	 *
+	 * @since 2014.12.02
+	 * @return file length
+	 */
+	int getFileLength()
+	{
+		return fileLength;
+	}
+
+	/**
 	 * Returns the memory length.
 	 *
 	 * @return memory length
@@ -127,6 +182,17 @@ public class Memory
 	int getLength()
 	{
 		return origBuffer.length;
+	}
+
+	/**
+	 * Returns the start address for the first routine.
+	 *
+	 * @since 2014.12.02
+	 * @return start address
+	 */
+	int getStartAddr()
+	{
+		return startAddr;
 	}
 
 	/**
@@ -141,7 +207,7 @@ public class Memory
 		int data = 0;
 		for (int c = 0; c < x; c++)
 		{
-			data = (data << 8) + (int)(getByteAtAddr(addr + c));
+			data = (data << 8) + getByteAtAddr(addr + c);
 		}
 		return data;
 	}

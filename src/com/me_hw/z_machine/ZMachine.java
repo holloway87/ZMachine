@@ -1,10 +1,6 @@
 package com.me_hw.z_machine;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 /**
  * Represents the Z Machine.
@@ -28,19 +24,36 @@ public class ZMachine
 	private int pc;
 
 	/**
+	 * Executes the z program from the loaded story file.
+	 *
+	 * @since 2014.12.02
+	 */
+	void execute()
+	{
+		int startByte = memory.getByteAtAddr(memory.getStartAddr());
+
+		System.out.printf("storyfile length: %d\n", memory.getLength());
+		System.out.printf("dynamic memory length: %d\n", memory.getDynamicLength());
+		System.out.printf("startByte: %d\n", startByte);
+		System.out.printf("fileLength: %d\n", memory.getFileLength());
+	}
+
+	/**
 	 * Loads the given story file into the memory.
 	 *
 	 * @param file story file
 	 */
-	void loadStoryfile(File file)
+	void loadStoryfile(File file) throws IOException
 	{
-		byte[] buffer = new byte[(int)file.length()];
+		int[] buffer = new int[(int)file.length()];
 		InputStream in;
+		DataInputStream stream;
 
 		// load input stream
 		try
 		{
 			in = new FileInputStream(file);
+			stream = new DataInputStream(in);
 		}
 		catch (FileNotFoundException e)
 		{
@@ -50,12 +63,14 @@ public class ZMachine
 		// read bytes
 		try
 		{
-			in.read(buffer);
-			in.close();
+			for (int c = 0; c < file.length(); c++)
+			{
+				buffer[c] = stream.readUnsignedByte();
+			}
 		}
-		catch (IOException e)
+		catch (EOFException e)
 		{
-			return;
+			stream.close();
 		}
 
 		// save memory
@@ -68,8 +83,6 @@ public class ZMachine
 			return;
 		}
 		pc = 0;
-		System.out.printf("storyfile length: %d\n", memory.getLength());
-		System.out.printf("dynamic memory length: %d\n", memory.getDynamicLength());
 	}
 
 }
